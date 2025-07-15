@@ -1,22 +1,23 @@
 from asyncore import readwrite
 
+from agno.document.chunking.document import DocumentChunking
 from agno.document.reader.pdf_reader import PDFReader
 from agno.knowledge.pdf import PDFKnowledgeBase
-from agno.vectordb.chroma import ChromaDb
-from agno.embedder.ollama import OllamaEmbedder
-
+from agentpdfx.utils.vector_db import VectorDb, VectorDBConfig
 
 def create_pdf_knowledge_base(pdf_path: str, file_name: str) -> PDFKnowledgeBase:
-    embedding_model = OllamaEmbedder(id='mxbai-embed-large',dimensions=1024)
-    vector_store = ChromaDb(
-        collection=f'{file_name}_document',
-        embedder=embedding_model,
+    vector_config = VectorDBConfig(
+        db_type='chroma',
+        index_name=f'{file_name}_document'
     )
+
+    vector_store = VectorDb(vector_config)
     
     knowledge_base = PDFKnowledgeBase(
         path=pdf_path,
-        vector_db=vector_store,
-        reader=PDFReader(chunk=True)
+        vector_db=vector_store.db,
+        reader=PDFReader(chunk=True),
+        chunking_strategy=DocumentChunking()
     )
 
     knowledge_base.load(recreate=False)
